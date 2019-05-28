@@ -6,7 +6,6 @@ from faker import Factory
 from faker.providers import BaseProvider
 import random
 import datetime
-import timedelta
 
 engine = create_engine("postgresql://metabase:metabase@localhost:5433/metabase")
 
@@ -54,12 +53,14 @@ def create_profile_rows(num=1):
         if hiv_status is True:
             hiv_care_info = fake.sentence(nb_words=6, variable_nb_words=True, ext_word_list=None)
             hiv_last_app = intake_date - timedelta(days=random.randint(30,160))
+            hiv_last_labs = intake_date - timedelta(days=random.randint(30,160))
             viral_load = random.choices('>1500', '>10000', '>100000', 'Undetectable')
             cd4 = random.choices(True,None)
             #Todo add languadge for cd4 test
         else:
             hiv_care_info = None
             hiv_last_app = None
+            hiv_last_labs = None
             viral_load = None
             cd4 = None
         hcv_status = random.choices((True,None),weights=[0.5,1.5])
@@ -67,6 +68,10 @@ def create_profile_rows(num=1):
             hcv_care_info = fake.sentence(nb_words=6, variable_nb_words=True, ext_word_list=None)
             hcv_last_app = intake_date - timedelta(days=random.randint(30,160))
             cchange_status = random.choices("waiting",'active','notinvoved')
+        else:
+            hcv_care_info = None
+            hcv_last_app = None
+            cchange_status = None
         output.append({
             "intake_date": intake_date,
             "first_name": fake.first_name(),
@@ -88,19 +93,55 @@ def create_profile_rows(num=1):
             "prior_auth_date": prior_auth_date,
             "income_source": random.choices('Full Time','Part Time','Cash Assistance'),
             "monthly_income": random.randint(300,1900),
-            "housing_status": random.choices('homeless','temporary housing','shelter','has home')
+            "housing_status": random.choices('homeless','temporary housing','shelter','has home'),
+            "hiv_status": hiv_status,
+            "hiv care info":hiv_care_info,
+            "hiv last appointment":hiv_last_app,
+            "hiv last labs": hiv_last_labs,
+            "viral load": viral_load,
+            "CD4": cd4,
+            "HCV Status": hcv_status,
+            "HCV Care Info": hcv_care_info,
+            "HCV Last App": hcv_last_app,
+            "CChange Status": cchange_status
         })
     return output
 
-def create_inurance_rows(num=1):
-    output = []
+
+def create_substance_info(num=1):
     for x in range(num):
+        substance_int = random.randint(0, 5)
+        print(substance_int)
+        substances = []
+        for x in range(substance_int):
+            substance_used = random.choices(('crack/cocaine', 'amphetamines', 'methamphetamines', 'THC',
+                                       'methadone', 'opiates', 'PCP', 'barbital', 'benzodiazapines',
+                                       'fentanyl', 'oxycodone', 'buprenorphine', 'k2', 'alcohol'))
+            use_itorateor = random.choices((' Times a Day',' Times a Week',' Times a Month'))
+            use_integer = random.randint(1, 7)
+            if substance_used in ['crack/cocaine', 'amphetamines', 'methamphetamines','methadone', 'opiates', 'PCP',
+                              'barbital', 'benzodiazapines', 'fentanyl', 'oxycodone', 'buprenorphine', 'k2']:
+                method = random.choices(('Smoke','Snort','Intervinously','Orally'))
+            elif substance_used == 'alcohol':
+                method = 'Orally'
+            elif substance_used == 'THC':
+                method = 'Smoked'
+            else:
+                method = 'Unknown'
+            substances.append({
+                "Substance Used":substance_used[0],
+                "Freqency Used":str(use_integer)+use_itorateor[0],
+                "Method": method,
+                "Dependent": random.choices((True,None),[0.2,1.8])
+            })
+    print(substances)
+    return substances
 
-        output.append({
-            "insturance_status":  random.choices(('insured', 'uninsured', 'application pending'),weights=[1.5,1,0.5]),
 
-        })
-    return output
+
+
+
+
 
 def create_app_data(x):
     data = pd.DataFrame(create_rows(x))
@@ -114,5 +155,4 @@ def create_app_data(x):
     intake_index = session.quiry(intake_table.c.index).all
     print(intake_index)
 
-
-create_app_data(5000)
+create_substance_info()
